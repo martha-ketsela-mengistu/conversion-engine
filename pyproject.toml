@@ -17,6 +17,7 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
     "python-dateutil>=2.9.0",
+    "mcp>=1.27.0",
 ]
 
 [dependency-groups]
@@ -29,7 +30,8 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["agent/tests"]
+addopts = "-m 'not integration'"
 markers = [
     "integration: live tests that call real external APIs (deselect with -m 'not integration')",
 ]
