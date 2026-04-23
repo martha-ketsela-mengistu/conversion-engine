@@ -1,0 +1,35 @@
+[project]
+name = "conversion-engine"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "resend>=0.8.0",
+    "africastalking>=1.2.7",
+    "hubspot-api-client>=9.0.0",
+    "httpx>=0.27.0",
+    "langfuse>=2.0.0",
+    "playwright>=1.44.0",
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.7.0",
+    "pandas>=2.2.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "python-dateutil>=2.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-httpx>=0.30.0",
+    "respx>=0.21.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: live tests that call real external APIs (deselect with -m 'not integration')",
+]
