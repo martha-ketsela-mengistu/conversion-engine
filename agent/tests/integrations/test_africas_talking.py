@@ -9,7 +9,7 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
-import integrations.africas_talking as at
+import agent.integrations.africas_talking as at
 
 
 def _at_response(phone: str) -> dict:

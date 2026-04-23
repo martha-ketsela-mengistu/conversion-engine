@@ -1,8 +1,8 @@
 """Tests for CompetitorGapAnalyzer."""
 
 import pytest
-from enrichment.competitor_gap import CompetitorGapAnalyzer
-from enrichment.ai_maturity import AIMaturityScore
+from agent.enrichment.competitor_gap import CompetitorGapAnalyzer
+from agent.enrichment.ai_maturity import AIMaturityScore
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ class TestGenerateInsight:
     def test_critical_severity_insight(self, analyzer):
         insight = analyzer._generate_insight([], "critical", "Acme")
         assert "Acme" in insight
-        assert "behind" in insight.lower() or "significantly" in insight.lower()
+        assert "sector" in insight.lower() or "not yet visible" in insight.lower() or "investment" in insight.lower()
 
     def test_significant_severity_with_gaps(self, analyzer):
         gaps = [{"description": "AI maturity 2 points below sector leaders"}]

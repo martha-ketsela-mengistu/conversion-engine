@@ -1,7 +1,7 @@
 """Tests for AIMaturityScorer."""
 
 import pytest
-from enrichment.ai_maturity import AIMaturityScorer, AIMaturityScore
+from agent.enrichment.ai_maturity import AIMaturityScorer, AIMaturityScore
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ import pytest
 import respx
 import httpx
 
-import integrations.cal_client as cal
+import agent.integrations.cal_client as cal
 
 
 class TestCalClientMocked:
@@ -17,10 +17,14 @@ class TestCalClientMocked:
         monkeypatch.setenv("PRODUCTION_MODE", "false")
 
         slots_payload = {
-            "slots": [
-                {"time": "2026-04-23T09:00:00Z"},
-                {"time": "2026-04-23T10:00:00Z"},
-            ]
+            "data": {
+                "slots": {
+                    "2026-04-23": [
+                        {"time": "2026-04-23T09:00:00Z"},
+                        {"time": "2026-04-23T10:00:00Z"},
+                    ]
+                }
+            }
         }
 
         with respx.mock(base_url="https://api.cal.com/v2") as mock:

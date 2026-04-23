@@ -9,7 +9,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
-import integrations.hubspot_client as hs
+import agent.integrations.hubspot_client as hs
 from hubspot.crm.contacts import BasicApi
 
 

@@ -7,8 +7,8 @@ from pathlib import Path
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 
-from enrichment.pipeline import EnrichmentPipeline, HiringSignalBrief
-from enrichment.ai_maturity import AIMaturityScore
+from agent.enrichment.pipeline import EnrichmentPipeline, HiringSignalBrief
+from agent.enrichment.ai_maturity import AIMaturityScore
 
 
 # ---------------------------------------------------------------------------
@@ -78,11 +78,11 @@ def job_velocity_fixture() -> dict:
 @pytest.fixture
 def pipeline(tmp_path, crunchbase_csv, layoffs_csv, job_velocity_fixture) -> EnrichmentPipeline:
     """Pipeline with mocked job scraper and temp data paths."""
-    from enrichment.crunchbase import CrunchbaseEnricher
-    from enrichment.layoffs import LayoffsEnricher
-    from enrichment.jobs import JobScraper
-    from enrichment.ai_maturity import AIMaturityScorer
-    from enrichment.competitor_gap import CompetitorGapAnalyzer
+    from agent.enrichment.crunchbase import CrunchbaseEnricher
+    from agent.enrichment.layoffs import LayoffsEnricher
+    from agent.enrichment.jobs import JobScraper
+    from agent.enrichment.ai_maturity import AIMaturityScorer
+    from agent.enrichment.competitor_gap import CompetitorGapAnalyzer
 
     p = EnrichmentPipeline.__new__(EnrichmentPipeline)
     p.crunchbase = CrunchbaseEnricher(data_path=crunchbase_csv)
@@ -109,6 +109,9 @@ def pipeline(tmp_path, crunchbase_csv, layoffs_csv, job_velocity_fixture) -> Enr
     output_dir = tmp_path / "outputs"
     output_dir.mkdir()
     p._output_dir = output_dir
+
+    # Stub out the LLM summarise call so tests run offline
+    p._summarise_signals = MagicMock(return_value="TestCo raised a Series A and is actively hiring engineers.")
     return p
 
 

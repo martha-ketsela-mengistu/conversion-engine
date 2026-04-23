@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 
-from enrichment.jobs import JobScraper
+from agent.enrichment.jobs import JobScraper
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ class TestFrozenDataset:
                 "confidence": 0.3,
                 "all_engineering_roles": [],
             }
-            with patch("enrichment.jobs.asyncio.run", return_value=mock_scrape.return_value):
+            with patch("agent.enrichment.jobs.asyncio.run", return_value=mock_scrape.return_value):
                 result = scraper.get_job_velocity("Unknown Co", "unknown.com")
         assert result["source"] == "live_scrape"
 
@@ -107,7 +107,7 @@ class TestCache:
             "confidence": 0.5,
             "all_engineering_roles": [],
         }
-        with patch("enrichment.jobs.asyncio.run", return_value=mock_result):
+        with patch("agent.enrichment.jobs.asyncio.run", return_value=mock_result):
             result = scraper.get_job_velocity("Stale Co", "stale.com")
         assert result["source"] == "live_scrape"
 
@@ -199,7 +199,7 @@ class TestLiveScrapeReturnStructure:
             "confidence": 0.3,
             "all_engineering_roles": [],
         }
-        with patch("enrichment.jobs.asyncio.run", return_value=mock_result):
+        with patch("agent.enrichment.jobs.asyncio.run", return_value=mock_result):
             result = scraper.get_job_velocity("Test Co", "test.com")
 
         required_keys = [
@@ -222,7 +222,7 @@ class TestLiveScrapeReturnStructure:
             "confidence": 0.5,
             "all_engineering_roles": ["Backend Engineer"],
         }
-        with patch("enrichment.jobs.asyncio.run", return_value=mock_result):
+        with patch("agent.enrichment.jobs.asyncio.run", return_value=mock_result):
             scraper.get_job_velocity("NewCo", "newco.com")
 
         cache_path = scraper.cache_dir / "newco.json"

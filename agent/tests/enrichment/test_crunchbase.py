@@ -4,7 +4,7 @@ import csv
 import pytest
 from pathlib import Path
 
-from enrichment.crunchbase import CrunchbaseEnricher
+from agent.enrichment.crunchbase import CrunchbaseEnricher
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ import csv
 import pytest
 from pathlib import Path
 
-from enrichment.layoffs import LayoffsEnricher
+from agent.enrichment.layoffs import LayoffsEnricher
 
 
 @pytest.fixture

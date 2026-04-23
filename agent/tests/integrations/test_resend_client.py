@@ -9,7 +9,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
-import integrations.resend_client as rc
+import agent.integrations.resend_client as rc
 
 
 def _mock_send(response_id: str = "mock-id"):
