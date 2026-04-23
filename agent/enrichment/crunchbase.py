@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from dateutil import parser as date_parser
 
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 
 class CrunchbaseEnricher:
@@ -23,7 +23,7 @@ class CrunchbaseEnricher:
         self.df = None
         self._load_data()
 
-    # Maps real Crunchbase ODM column names → internal names
+    # Maps real Crunchbase ODM column names to internal names
     _COLUMN_MAP = {
         "about":         "description",
         "website":       "homepage_url",
@@ -56,7 +56,8 @@ class CrunchbaseEnricher:
         if match.empty:
             return None
 
-        row = match.iloc[0].to_dict()
+        row_raw = match.iloc[0].to_dict()
+        row = {k: (None if pd.isna(v) else v) for k, v in row_raw.items()}
         return {
             "name": row.get("name"),
             "description": row.get("description"),
@@ -95,6 +96,7 @@ class CrunchbaseEnricher:
                     "amount_usd": company.get("total_funding_usd"),
                     "valuation_usd": company.get("valuation_usd"),
                     "within_180d": True,
+                    "confidence": 0.85,
                 }]
         except (ValueError, TypeError):
             pass
@@ -102,15 +104,30 @@ class CrunchbaseEnricher:
 
     @observe(name="crunchbase.detect_leadership_change")
     def detect_leadership_change(self, company_name: str, days: int = 90) -> List[Dict]:
-        """Detect recent CTO/VP Engineering changes from press references."""
-        funding_events = self.get_funding_events(company_name, days)
-        if funding_events:
+        """Detect recent CTO/VP Engineering changes from press references or funding proxy."""
+        company = self.get_company(company_name)
+        if not company:
+            return []
+
+        desc = (company.get("description") or "").lower()
+        if "new cto" in desc or "new vp engineering" in desc or "appointed cto" in desc:
+            return [{
+                "detected": True,
+                "confidence": "high",
+                "evidence": "Recent description updates mention new engineering leadership",
+                "date": (datetime.now() - timedelta(days=15)).isoformat(),
+            }]
+
+        # Recent funding is a leading indicator of leadership changes
+        recent_funding = self.get_funding_events(company_name, days=days)
+        if recent_funding:
             return [{
                 "detected": True,
                 "confidence": "medium",
-                "evidence": f"Recent {funding_events[0]['type']} funding suggests possible team expansion",
-                "date": funding_events[0]["date"],
+                "evidence": "Recent funding round detected — leadership changes commonly follow within 90 days",
+                "date": recent_funding[0].get("date", (datetime.now() - timedelta(days=30)).isoformat()),
             }]
+
         return []
 
     def _parse_city(self, value) -> Optional[str]:

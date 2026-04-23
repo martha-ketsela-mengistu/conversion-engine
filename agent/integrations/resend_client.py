@@ -1,7 +1,7 @@
 import os
 import resend
 from dotenv import load_dotenv
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 load_dotenv()
 

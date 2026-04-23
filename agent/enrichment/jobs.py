@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page
 
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 
 ENGINEERING_KEYWORDS = [

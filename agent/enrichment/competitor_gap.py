@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-from observability.tracing import observe
+from agent.observability.tracing import observe
 from .ai_maturity import AIMaturityScore, AIMaturityScorer
 from .crunchbase import CrunchbaseEnricher
 
@@ -34,9 +34,22 @@ class CompetitorGapAnalyzer:
             return benchmarks
 
         df = self.crunchbase.df
-        for industry in df["category_list"].dropna().unique()[:20]:
-            industry_companies = df[df["category_list"].str.contains(industry, na=False)]
-            if len(industry_companies) < 5:
+        
+        all_industries = set()
+        for val in df["category_list"].dropna():
+            if val.startswith("["):
+                try:
+                    for i in json.loads(val):
+                        all_industries.add(i)
+                except:
+                    pass
+            else:
+                for i in val.split(","):
+                    all_industries.add(i.strip())
+
+        for industry in list(all_industries)[:20]:
+            industry_companies = df[df["category_list"].str.contains(industry, regex=False, na=False)]
+            if len(industry_companies) < 2:  # lowered threshold so it works on small samples
                 continue
 
             maturities = []
@@ -121,6 +134,25 @@ class CompetitorGapAnalyzer:
         gap_severity = self._determine_severity(prospect_score, top_quartile)
         confidence = min(0.95, max(0.3, ai_maturity.confidence * (benchmark.get("sample_size", 10) / 20)))
 
+        practices_gap = next((g for g in gaps if g.get("category") == "practices"), None)
+        top_quartile_practices_not_observed = [
+            {
+                "practice": p,
+                "public_signal": (
+                    f"Not observed in {company_name}'s public signal data; "
+                    f"sector leaders consistently demonstrate this capability."
+                ),
+            }
+            for p in (practices_gap or {}).get("missing_practices", [])
+        ]
+
+        computed_gap_finding = (
+            f"AI maturity score of {prospect_score}/3, compared to a sector top-quartile "
+            f"benchmark of {top_quartile}/3 "
+            f"(sector average: {round(avg, 1)}/3 across "
+            f"{benchmark.get('sample_size', 10)} companies analysed)."
+        )
+
         return {
             "prospect_name": company_name,
             "sector": primary_sector,
@@ -133,6 +165,9 @@ class CompetitorGapAnalyzer:
             "top_quartile_practices": benchmark.get("practices", []),
             "gap_severity": gap_severity,
             "confidence": round(confidence, 2),
+            "computed_gap_finding": computed_gap_finding,
+            "top_quartile_practices_not_observed": top_quartile_practices_not_observed,
+            "suggested_pitch_shift": self._generate_pitch_shift(gaps, gap_severity),
             "actionable_insight": self._generate_insight(gaps, gap_severity, company_name),
         }
 
@@ -181,12 +216,43 @@ class CompetitorGapAnalyzer:
         return "minimal"
 
     def _generate_insight(self, gaps: List[Dict], severity: str, company_name: str) -> str:
+        """Research-finding framing — never condescending, never asserts failure."""
         if severity == "critical":
-            return f"{company_name} is significantly behind sector leaders in AI readiness—this represents both a risk and an opportunity to leapfrog with dedicated engineering capacity."
+            return (
+                f"Sector peers show consistent public signal of AI infrastructure investment "
+                f"not yet visible for {company_name}. "
+                f"Worth asking whether this is a deliberate sequencing decision or a resourcing constraint."
+            )
         if severity == "significant":
-            if gaps:
-                return f"{company_name} shows a {gaps[0].get('description', 'gap')} compared to peers. Addressing this could accelerate time-to-market for AI initiatives."
-            return f"{company_name} has room to accelerate AI capabilities relative to sector benchmarks."
+            gap_desc = gaps[0].get("description", "a capability difference") if gaps else "a capability difference"
+            return (
+                f"For {company_name}, there is {gap_desc} relative to top-quartile peers in this sector. "
+                f"Curious whether this is already on the roadmap or still being scoped."
+            )
         if severity == "moderate":
-            return f"{company_name} is tracking near sector average for AI maturity. Additional engineering capacity could push you into the top quartile within 6 months."
-        return f"{company_name} demonstrates strong AI maturity relative to peers. The opportunity is in scaling execution velocity."
+            return (
+                f"{company_name} is tracking near the sector average for AI maturity. "
+                f"The question is whether the goal is to stay paced with the field or get ahead of it."
+            )
+        return (
+            f"{company_name} shows strong AI maturity relative to sector peers. "
+            f"The conversation is likely about scaling execution velocity, not capability gaps."
+        )
+
+    def _generate_pitch_shift(self, gaps: List[Dict], severity: str) -> str:
+        if severity in ("critical", "significant"):
+            practices_gap = next((g for g in gaps if g.get("category") == "practices"), None)
+            if practices_gap and practices_gap.get("missing_practices"):
+                top_practice = practices_gap["missing_practices"][0]
+                return (
+                    f"Shift from generic talent pitch to specialized capability question: "
+                    f"'Have you scoped a dedicated {top_practice.lower()} function yet?'"
+                )
+            return "Lead with the sector benchmark data as a research finding, then ask about roadmap sequencing."
+        if severity == "moderate":
+            return (
+                "Frame as an acceleration question: "
+                "'The gap between sector average and top quartile is often one focused function — "
+                "is that something you're actively scoping?'"
+            )
+        return "Lead with execution velocity, not capability gaps — prospect is already AI-mature."

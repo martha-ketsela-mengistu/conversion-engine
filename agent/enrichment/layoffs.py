@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from dateutil import parser as date_parser
 
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 
 class LayoffsEnricher:
@@ -62,6 +62,7 @@ class LayoffsEnricher:
                 "within_120d": True,
                 "events": recent_layoffs,
                 "latest_event": recent_layoffs[0],
+                "confidence": 0.90,
             }
 
-        return {"has_recent_layoffs": False, "within_120d": False}
+        return {"has_recent_layoffs": False, "within_120d": False, "confidence": 0.90}

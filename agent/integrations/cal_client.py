@@ -1,11 +1,15 @@
 import os
 import httpx
 from dotenv import load_dotenv
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 load_dotenv()
 
 _BASE_URL = os.getenv("CAL_BASE_URL", "https://api.cal.com/v2")
+
+
+def _is_dev() -> bool:
+    return os.getenv("PRODUCTION_MODE", "false").lower() != "true"
 
 
 def _headers() -> dict:
@@ -25,6 +29,7 @@ def get_available_slots(event_type_id: int, start_time: str, end_time: str) -> l
     """Returns available slots for the given event type within the date range.
 
     start_time / end_time must be ISO-8601 strings, e.g. '2026-04-22T00:00:00Z'.
+    Returns a flat list of dicts with a 'time' key.
     """
     with _client() as c:
         r = c.get(
@@ -36,39 +41,57 @@ def get_available_slots(event_type_id: int, start_time: str, end_time: str) -> l
             },
         )
         r.raise_for_status()
-        return r.json().get("slots", [])
+        body = r.json()
+        # Cal.com v2: {"data": {"slots": {"2026-04-24": [{"time": "..."}]}}}
+        # Flatten across all dates
+        raw = body.get("data", body).get("slots", {})
+        if isinstance(raw, list):
+            return raw
+        slots: list[dict] = []
+        for day_slots in raw.values():
+            slots.extend(day_slots)
+        return slots
 
 
 @observe(name="cal.create_booking")
 def create_booking(event_type_id: int, start_time: str, attendee: dict) -> dict:
-    """Creates a booking. In dev mode (PRODUCTION_MODE=False) returns a mock response."""
-    if os.getenv("PRODUCTION_MODE", "false").lower() != "true":
+    """Creates a booking via Cal.com v2 API. Returns mock in dev mode."""
+    if _is_dev():
         return {
             "uid": "mock-booking-uid",
             "status": "ACCEPTED",
             "start": start_time,
-            "attendee": attendee,
             "_mock": True,
         }
+    full_attendee = {"timeZone": "UTC", **attendee}
     with _client() as c:
         r = c.post(
             "/bookings",
             json={
                 "eventTypeId": event_type_id,
                 "start": start_time,
-                "attendee": attendee,
+                "attendee": full_attendee,
             },
         )
-        r.raise_for_status()
-        data = r.json()
+        if not r.is_success:
+            raise httpx.HTTPStatusError(
+                f"{r.status_code} from Cal.com: {r.text}",
+                request=r.request,
+                response=r,
+            )
+        data = r.json().get("data", r.json())
         return {"uid": data["uid"], "status": data["status"], "start": data["start"]}
 
 
 @observe(name="cal.cancel_booking")
 def cancel_booking(booking_uid: str, reason: str = "") -> dict:
-    if os.getenv("PRODUCTION_MODE", "false").lower() != "true":
+    if _is_dev():
         return {"uid": booking_uid, "status": "CANCELLED", "_mock": True}
     with _client() as c:
-        r = c.delete(f"/bookings/{booking_uid}", json={"cancellationReason": reason})
+        r = c.delete(
+            f"/bookings/{booking_uid}",
+            content=f'{{"cancellationReason": "{reason}"}}',
+            headers={"Content-Type": "application/json"},
+        )
         r.raise_for_status()
         return {"uid": booking_uid, "status": "CANCELLED"}

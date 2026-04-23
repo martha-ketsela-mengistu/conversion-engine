@@ -3,7 +3,7 @@
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
-from observability.tracing import observe
+from agent.observability.tracing import observe
 
 
 @dataclass
