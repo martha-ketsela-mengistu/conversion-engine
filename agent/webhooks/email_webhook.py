@@ -21,6 +21,7 @@ from agent.integrations.resend_client import send_email
 from agent.integrations.africas_talking import send_sms
 from agent.integrations.cal_client import create_booking
 from agent.observability.tracing import record_span
+from agent.prompts import build_objection_response
 
 import httpx
 
@@ -79,6 +80,35 @@ def _attempt_programmatic_booking(text: str, email: str, name: str) -> str | Non
     return None
 
 
+def _detect_intent(text: str) -> str:
+    """Use LLM to detect the intent of the email reply."""
+    llm_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    model = os.getenv("ENRICHMENT_MODEL", "qwen/qwen3.5-flash-02-23").removeprefix("openrouter/")
+
+    if not api_key:
+        return "positive"
+
+    prompt = (
+        f"Analyze the intent of this B2B email reply:\n'{text}'\n\n"
+        "Categorize as exactly one: 'positive', 'objection_price', 'objection_vendor', 'objection_poc', 'unsubscribe', or 'neutral'.\n"
+        "Return ONLY the category string."
+    )
+
+    try:
+        with httpx.Client(timeout=10) as client:
+            r = client.post(
+                f"{llm_url}/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={"model": model, "messages": [{"role": "user", "content": prompt}]}
+            )
+            r.raise_for_status()
+            intent = r.json()["choices"][0]["message"]["content"].lower().strip().replace("'", "").replace('"', "")
+            return intent
+    except Exception:
+        return "neutral"
+
+
 @router.post("/webhook/email/reply")
 async def handle_email_reply(request: Request) -> dict:
     """Handle an inbound email reply forwarded by Resend."""
@@ -134,10 +164,21 @@ async def handle_email_reply(request: Request) -> dict:
                 log_sms_sent(from_email, f"Sent booking link to {phone}")
             logger.info("email_reply.sms_sent to=%s", phone)
 
-    # Attempt programmatic booking via LLM
-    prospect_name = (contact or {}).get("properties", {}).get("firstname", "Prospect")
-    logger.info("email_reply.programmatic_booking_attempt from=%s name=%s", from_email, prospect_name)
-    booked_time = _attempt_programmatic_booking(body_text, from_email, prospect_name)
+    # Intent detection and response
+    intent = _detect_intent(body_text)
+    logger.info("email_reply.intent_detected from=%s intent=%s", from_email, intent)
+
+    if intent == "unsubscribe":
+        logger.info("email_reply.unsubscribe from=%s", from_email)
+        # In real life, we'd unsubscribe them in HubSpot here
+        return {"status": "unsubscribed", "from": from_email}
+
+    # Attempt programmatic booking via LLM (only for positive intent)
+    booked_time = None
+    if intent == "positive" or intent == "neutral":
+        prospect_name = (contact or {}).get("properties", {}).get("firstname", "Prospect")
+        logger.info("email_reply.programmatic_booking_attempt from=%s name=%s", from_email, prospect_name)
+        booked_time = _attempt_programmatic_booking(body_text, from_email, prospect_name)
 
     if booked_time:
         logger.info("email_reply.booking_confirmed from=%s booked_time=%s", from_email, booked_time)
@@ -155,6 +196,29 @@ async def handle_email_reply(request: Request) -> dict:
             )
         except Exception as send_err:
             logger.error("email_reply.booking_confirm_send_failed from=%s exc=%s", from_email, send_err)
+    elif "objection" in intent:
+        # Handle objections
+        objection_key = {
+            "objection_price": "price_higher_than_india",
+            "objection_vendor": "already_working_with_major_vendor",
+            "objection_poc": "small_poc_only",
+        }.get(intent, "neutral")
+        
+        reply_body = build_objection_response(objection_key)
+        logger.info("email_reply.objection_reply from=%s intent=%s key=%s", from_email, intent, objection_key)
+        try:
+            send_email(
+                to=from_email,
+                subject=f"Re: {subject}" if subject else "Re: Your reply",
+                html=(
+                    f"<p>{reply_body}</p>"
+                    f"<p>Does a 15-minute call to compare notes make sense? "
+                    f"<a href='{_CAL_LINK}'>Book here</a></p>"
+                    "<p>Best,<br>Martha @ Tenacious</p>"
+                ),
+            )
+        except Exception as send_err:
+            logger.error("email_reply.objection_send_failed from=%s exc=%s", from_email, send_err)
     elif body_text and not sms_sent:
         # Fallback: Auto-reply with booking link
         logger.info("email_reply.auto_reply from=%s", from_email)

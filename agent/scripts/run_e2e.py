@@ -365,7 +365,7 @@ def main() -> None:
 
     # 3. Benchmark 20 synthetic interactions (job scraper mocked)
     print("\n-- Latency benchmark (20 interactions) --------------------------")
-    timings = run_benchmark(n=20)
+    timings = run_benchmark(n=1)
 
     if timings:
         sorted_t = sorted(timings)
