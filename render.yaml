@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: conversion-engine
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      # --- Runtime ---
+      - key: ENVIRONMENT
+        value: production
+      - key: PRODUCTION_MODE
+        value: false          # flip to true only when ready to send real emails
+
+      # --- OpenRouter ---
+      - key: OPENROUTER_API_KEY
+        sync: false           # set in Render dashboard
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: EMAIL_MODEL
+        value: qwen/qwen3-next-80b-a3b-thinking
+      - key: ENRICHMENT_MODEL
+        value: qwen/qwen3.5-9b
+
+      # --- Resend ---
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: onboarding@resend.dev
+
+      # --- Africa's Talking ---
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_USERNAME
+        value: sandbox
+      - key: AT_SHORTCODE
+        value: "88564"
+
+      # --- HubSpot ---
+      - key: HUBSPOT_ACCESS_TOKEN
+        sync: false
+
+      # --- Cal.com ---
+      - key: CAL_API_KEY
+        sync: false
+      - key: CAL_EVENT_TYPE_ID
+        value: "5448474"
+
+      # --- Langfuse ---
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_HOST
+        value: https://cloud.langfuse.com
+
+      # --- Sink (dev routing) ---
+      - key: SINK_EMAIL
+        value: marthaket30@gmail.com
+      - key: SINK_PHONE
+        value: "+251966235817"
