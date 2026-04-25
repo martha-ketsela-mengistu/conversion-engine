@@ -4,4 +4,4 @@ __pycache__
 data/
 uv.lock
 .pytest_cache/
-agent/outputs/
+# agent/outputs/
