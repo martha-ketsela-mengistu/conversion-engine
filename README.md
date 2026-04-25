@@ -45,17 +45,19 @@ AI-powered outreach pipeline: enrich a prospect → personalise an email → sen
 
 | Segment | Criteria | Confidence |
 |---------|----------|-----------|
-| **segment_1** | Recent funding (≤180d) + 15–200 employees | 0.85 |
-| **segment_2** | Recent layoffs (≤120d) + 200–2000 employees | 0.80 |
-| **segment_3** | New CTO/VP Eng detected (≤90d) | 0.70 |
-| **segment_4** | AI maturity score ≥ 2 (capability gap) | 0.65 |
+| **segment_1_series_a_b** | Recent funding (≤180d) + 15–80 employees | 0.85–0.90 |
+| **segment_2_mid_market_restructure** | Recent layoffs (≤120d) + 200–2000 employees | 0.70–0.95 |
+| **segment_3_leadership_transition** | New CTO/VP Eng detected (≤90d) | 0.60–0.90 |
+| **segment_4_specialized_capability** | AI maturity score ≥ 2 (capability gap) | 0.40–0.80 |
+
+Outreach is strictly gated: prospects classified as `abstain` or with confidence below **0.6** are skipped to preserve brand safety.
 
 ### LLM Split
 
 | Model env var | Purpose | Default |
 |---|---|---|
 | `ENRICHMENT_MODEL` | Internal signal summarisation — fast/cheap | `qwen/qwen3.5-flash-02-23` |
-| `EMAIL_MODEL` | Customer-facing outreach copy — quality | `qwen/qwen3-next-80b-a3b-instruct:free` |
+| `EMAIL_MODEL` | Customer-facing outreach copy — quality | `qwen/qwen3-next-80b-a3b-thinking` |
 
 ---
 
@@ -197,6 +199,26 @@ When `false`:
 
 **Emergency stop condition:**  
 If `reply_rate > 0%` AND `wrong_signal_rate > 5%`, set `PRODUCTION_MODE=false` immediately and investigate signal quality.
+
+---
+
+## Known Limitations & Next Steps
+
+A successor picking up this project will hit the following concrete issues:
+
+1. **YC scraper is unreliable** — `agent/scripts/scrape_yc_companies.py` uses Playwright + Algolia interception, but YC blocks headless Chromium and Algolia responses are gzip-compressed. Use `--source sec` (SEC EDGAR) or the Crunchbase ODM as the data source instead.
+
+2. **Job velocity signal is always `insufficient` for SEC EDGAR companies** — New Form D filers have no Crunchbase record, so the job scraper finds zero roles and the enrichment pipeline falls back to the `segment_override` passed from the outbound script. The email LLM will omit the hiring-velocity claim (guarded in `prompts._format_signals`) but the brief will show `open_roles_today: 0`.
+
+3. **Thinking model latency is high at scale** — `EMAIL_MODEL` uses `qwen3-next-80b-a3b-thinking`, a large reasoning model. p50 is ~47s per lead due to chain-of-thought generation. Acceptable for single-lead demo runs; switch to a flash model (e.g., `qwen/qwen3.5-flash-02-23`) in `.env` if processing batches of 10+ leads.
+
+4. **HubSpot deal association uses `associationTypeId: 3`** — This is the default deal→contact type in standard HubSpot portals. Custom portals may use a different ID. Verify via *HubSpot CRM → Settings → Properties → Associations* before going live.
+
+5. **Cal.com returns mock bookings in dev mode** — `PRODUCTION_MODE=false` causes `cal_client.create_booking()` to return `{"_mock": True, "start": "..."}`. Real bookings require a paid Cal.com plan, a verified `CAL_API_KEY`, and a valid `CAL_EVENT_TYPE_ID` (set in `.env`).
+
+6. **robots.txt compliance adds ~0.5s per scrape target** — `JobScraper._is_allowed()` fetches and parses `robots.txt` at runtime with a 60-minute in-memory cache per domain. The cache resets on process restart; add Redis or file-backed caching for persistent compliance across deploys.
+
+7. **ICP classifier requires `--demo` for historical Crunchbase data** — The 180-day funding window means the bundled `crunchbase-companies-information.csv` (2024 data) produces zero qualified leads in strict mode. Either use `--source sec` for fresh data or pass `--demo` to relax the window for demos and evaluation.
 
 ---
 
