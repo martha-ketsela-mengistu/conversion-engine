@@ -1,0 +1,63 @@
+{
+  "period": "2026-04-19 to 2026-04-25",
+  "currency": "USD",
+  "line_items": [
+    {
+      "service": "OpenRouter (LLM)",
+      "purpose": "tau2-bench retail evaluation \u2014 150 simulations x 5 trials",
+      "amount_usd": 2.99,
+      "basis": "150 tasks x $0.0199 avg agent cost (eval/score_log.json .avg_agent_cost)",
+      "tier": "paid"
+    },
+    {
+      "service": "OpenRouter (LLM)",
+      "purpose": "Production pipeline \u2014 enrichment + email generation (20 benchmark interactions)",
+      "amount_usd": 0.0,
+      "basis": "EMAIL_MODEL=qwen/qwen3-next-80b-a3b-thinking; ENRICHMENT_MODEL=qwen/qwen3.5-9b. Production cost not metered during challenge week \u2014 no OpenRouter invoice line generated.",
+      "tier": "unmetered"
+    },
+    {
+      "service": "Resend",
+      "purpose": "Transactional email send (dev mode \u2014 all routed to SINK_EMAIL)",
+      "amount_usd": 0.0,
+      "basis": "Free tier (3,000 emails/month). 0 real recipient emails sent.",
+      "tier": "free"
+    },
+    {
+      "service": "Africa's Talking",
+      "purpose": "SMS warm-lead follow-up (sandbox)",
+      "amount_usd": 0.0,
+      "basis": "Sandbox environment \u2014 no charge",
+      "tier": "sandbox"
+    },
+    {
+      "service": "HubSpot",
+      "purpose": "CRM contact creation and timeline events via MCP",
+      "amount_usd": 0.0,
+      "basis": "Developer sandbox \u2014 no charge",
+      "tier": "developer_sandbox"
+    },
+    {
+      "service": "Cal.com",
+      "purpose": "Discovery call booking (dev mode returns mock booking)",
+      "amount_usd": 0.0,
+      "basis": "Self-hosted Docker Compose \u2014 no charge",
+      "tier": "self_hosted"
+    },
+    {
+      "service": "Langfuse",
+      "purpose": "LLM observability \u2014 traces for all enrichment + email generation spans",
+      "amount_usd": 0.0,
+      "basis": "Cloud free tier \u2014 no charge",
+      "tier": "free"
+    }
+  ],
+  "total_usd": 2.99,
+  "cost_per_task_tau2bench": 0.0199,
+  "cost_per_production_interaction_usd": 0.0,
+  "note_on_production_cost": "Production pipeline ran qwen/qwen3-next-80b-a3b-thinking (email) and qwen/qwen3.5-9b (enrichment). No OpenRouter invoice was generated for production interactions during the challenge week. Switching to a paid flash-class model (Claude Haiku 4.5 or equivalent) would cost approximately $0.01\u2013$0.03 per lead at current token volumes.",
+  "qualification_rate_observed": 0.55,
+  "qualification_rate_basis": "11 of 20 benchmark interactions produced a classified ICP segment; remainder classified as abstain (insufficient signals) or skipped by bench gate",
+  "cost_per_qualified_lead_usd": 0.0362,
+  "cost_per_qualified_lead_basis": "tau2-bench proxy: $0.0199 / 0.55 qualification rate = $0.0362. Rounds to <$0.05 on free tier. Challenge target: <$5."
+}
