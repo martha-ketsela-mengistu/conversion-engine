@@ -2,7 +2,7 @@
 
 import json
 from mcp.server.fastmcp import FastMCP
-from agent.integrations.hubspot_client import log_engagement, create_contact, get_contact_by_email
+from agent.integrations.hubspot_client import log_engagement, create_contact, get_contact_by_email, create_deal
 
 # Create the MCP server
 mcp = FastMCP("HubSpot")
@@ -80,8 +80,13 @@ def log_booking_created(email: str, start_time: str) -> str:
         return f"Contact not found: {email}"
     
     body = f"Discovery call booked for {start_time}"
-    result = log_engagement(contact["id"], "meeting", body)
-    return json.dumps(result)
+    log_engagement(contact["id"], "meeting", body)
+    deal = create_deal(
+        contact_id=contact["id"],
+        deal_name=f"Discovery Call – {contact['properties'].get('company', email)} ({start_time[:10]})",
+        stage="appointmentscheduled",
+    )
+    return json.dumps({"note": "logged", "deal": deal})
 
 if __name__ == "__main__":
     mcp.run()

@@ -279,3 +279,100 @@ class TestEmailWebhookProgrammaticBooking:
         call_html = _kw.get("html") or (_args[2] if len(_args) > 2 else "")
         assert "cal.com" in call_html.lower()
         assert "gone ahead and booked" not in call_html
+
+
+# ---------------------------------------------------------------------------
+# Bench-gated capacity check (PROBE-3-1 fix)
+# ---------------------------------------------------------------------------
+
+class TestEmailWebhookBenchGate:
+    def test_unavailable_stack_reply_contains_delivery_lead(self):
+        """PROBE-3-1: Rust=0 available -> reply routes to delivery lead, not booking link."""
+        with patch("agent.webhooks.email_webhook.get_contact_by_email", return_value=None), \
+             patch("agent.webhooks.email_webhook._detect_intent", return_value="positive"), \
+             patch("agent.webhooks.email_webhook._check_bench_for_stack", return_value={"available": 0, "deploy_days": 14}), \
+             patch("agent.webhooks.email_webhook.send_email", return_value={"id": "e-bench-1"}) as mock_send:
+            r = client.post("/webhook/email/reply", json={
+                "type": "email.received",
+                "data": {
+                    "from": "cto@rustlang.dev",
+                    "text": "Very interested. Do you have rust engineers available? We need 3 for a project.",
+                    "subject": "Re: Tenacious intro",
+                },
+            })
+
+        assert r.status_code == 200
+        mock_send.assert_called_once()
+        _args, _kw = mock_send.call_args
+        call_html = (_kw.get("html") or "").lower()
+        assert "delivery lead" in call_html
+        assert "not staffed" in call_html or "not available" in call_html or "not staffed" in call_html
+
+    def test_available_stack_reply_contains_exact_count(self):
+        """PROBE-3-3: data=9 available -> reply states 9, not 'several'."""
+        with patch("agent.webhooks.email_webhook.get_contact_by_email", return_value=None), \
+             patch("agent.webhooks.email_webhook._detect_intent", return_value="positive"), \
+             patch("agent.webhooks.email_webhook._check_bench_for_stack", return_value={"available": 9, "deploy_days": 7}), \
+             patch("agent.webhooks.email_webhook.send_email", return_value={"id": "e-bench-2"}) as mock_send:
+            r = client.post("/webhook/email/reply", json={
+                "type": "email.received",
+                "data": {
+                    "from": "head@datadream.io",
+                    "text": "How many data engineers do you have available right now?",
+                    "subject": "Re: Tenacious intro",
+                },
+            })
+
+        assert r.status_code == 200
+        mock_send.assert_called_once()
+        _args, _kw = mock_send.call_args
+        call_html = _kw.get("html") or ""
+        assert "9" in call_html
+        assert "several" not in call_html.lower()
+        assert "a few" not in call_html.lower()
+
+    def test_no_stack_ask_skips_bench_check(self):
+        """Non-capacity questions should not trigger the bench gate."""
+        with patch("agent.webhooks.email_webhook.get_contact_by_email", return_value=None), \
+             patch("agent.webhooks.email_webhook._detect_intent", return_value="positive"), \
+             patch("agent.webhooks.email_webhook._attempt_programmatic_booking", return_value=None), \
+             patch("agent.webhooks.email_webhook._check_bench_for_stack") as mock_bench, \
+             patch("agent.webhooks.email_webhook.send_email", return_value={"id": "e-bench-3"}):
+            r = client.post("/webhook/email/reply", json={
+                "type": "email.received",
+                "data": {
+                    "from": "x@y.com",
+                    "text": "Sounds great, let's set up a call.",
+                    "subject": "Re: Intro",
+                },
+            })
+
+        assert r.status_code == 200
+        mock_bench.assert_not_called()
+
+    def test_committed_capacity_reduces_available(self):
+        """PROBE-3-2: committed=5 Python on bench of 7 -> effective=2, reply shows 2."""
+        import agent.webhooks.email_webhook as wh
+        wh._COMMITTED["python"] = 5
+
+        try:
+            with patch("agent.webhooks.email_webhook.get_contact_by_email", return_value=None), \
+                 patch("agent.webhooks.email_webhook._detect_intent", return_value="positive"), \
+                 patch("agent.webhooks.email_webhook._check_bench_for_stack", return_value={"available": 7, "deploy_days": 7}), \
+                 patch("agent.webhooks.email_webhook.send_email", return_value={"id": "e-bench-4"}) as mock_send:
+                r = client.post("/webhook/email/reply", json={
+                    "type": "email.received",
+                    "data": {
+                        "from": "vp@doublerequest.com",
+                        "text": "We need python engineers starting next month. Available?",
+                        "subject": "Re: Intro",
+                    },
+                })
+        finally:
+            wh._COMMITTED.pop("python", None)
+
+        assert r.status_code == 200
+        mock_send.assert_called_once()
+        _args, _kw = mock_send.call_args
+        call_html = _kw.get("html") or ""
+        assert "2" in call_html

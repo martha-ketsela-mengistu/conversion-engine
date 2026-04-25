@@ -13,11 +13,35 @@ import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from urllib.robotparser import RobotFileParser
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page
 
 from agent.observability.tracing import observe
+
+# Per-process robots.txt cache: domain -> (RobotFileParser, fetched_at)
+_robots_cache: dict[str, tuple[RobotFileParser, datetime]] = {}
+_ROBOTS_TTL = timedelta(minutes=60)
+_USER_AGENT = "TenaciousBot"
+
+
+def _is_allowed(url: str) -> bool:
+    """Return True if robots.txt permits crawling this URL. Defaults to True on fetch error."""
+    parsed = urlparse(url)
+    domain = f"{parsed.scheme}://{parsed.netloc}"
+    now = datetime.now()
+    cached = _robots_cache.get(domain)
+    if cached is None or (now - cached[1]) > _ROBOTS_TTL:
+        rp = RobotFileParser()
+        rp.set_url(f"{domain}/robots.txt")
+        try:
+            rp.read()
+        except Exception:
+            return True  # if robots.txt is unreachable, default to allowed
+        _robots_cache[domain] = (rp, now)
+    return _robots_cache[domain][0].can_fetch(_USER_AGENT, url)
 
 
 ENGINEERING_KEYWORDS = [
@@ -88,6 +112,8 @@ class JobScraper:
             page = await browser.new_page()
 
             for url in career_urls:
+                if not _is_allowed(url):
+                    continue  # robots.txt disallows this URL
                 try:
                     await page.goto(url, timeout=10000)
                     await page.wait_for_load_state("networkidle", timeout=5000)
@@ -108,6 +134,20 @@ class JobScraper:
         ]
 
         velocity_60d = len(recent_engineering) / 8.57  # roles per week
+        
+        # velocity_label: tripled_or_more, doubled, increased_modestly, flat, declined, insufficient_signal
+        if velocity_60d >= 3.0:
+            velocity_label = "tripled_or_more"
+        elif velocity_60d >= 2.0:
+            velocity_label = "doubled"
+        elif velocity_60d >= 1.0:
+            velocity_label = "increased_modestly"
+        elif velocity_60d >= 0.0:
+            velocity_label = "flat"
+        elif velocity_60d < 0.0:
+            velocity_label = "declined"
+        else:
+            velocity_label = "insufficient_signal"
 
         if len(engineering_jobs) >= 10:
             strength, confidence = "strong", 0.9
@@ -117,6 +157,7 @@ class JobScraper:
             strength, confidence = "weak", 0.5
         else:
             strength, confidence = "none", 0.3
+            velocity_label = "insufficient_signal"
 
         return {
             "company_name": company_name,
@@ -126,6 +167,7 @@ class JobScraper:
             "total_open_roles": len(jobs),
             "recent_posts": recent_engineering[:10],
             "velocity_60d": round(velocity_60d, 2),
+            "velocity_label": velocity_label,
             "hiring_signal_strength": strength,
             "confidence": confidence,
             "all_engineering_roles": [j.get("title") for j in engineering_jobs],

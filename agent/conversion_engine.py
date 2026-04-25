@@ -40,7 +40,7 @@ class ConversionEngine:
         self._llm_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         self._llm_key = os.environ["OPENROUTER_API_KEY"]
         # EMAIL_MODEL: higher quality, customer-facing outreach copy
-        raw_email = os.getenv("EMAIL_MODEL", "qwen/qwen3-next-80b-a3b-instruct:free")
+        raw_email = os.getenv("EMAIL_MODEL", "qwen/qwen3-next-80b-a3b-thinking")
         self._email_model = raw_email.removeprefix("openrouter/")
 
     # ------------------------------------------------------------------
@@ -55,6 +55,8 @@ class ConversionEngine:
         prospect_email: str,
         prospect_name: str = "",
         prospect_phone: Optional[str] = None,
+        segment_override: Optional[str] = None,
+        confidence_override: Optional[float] = None,
     ) -> dict:
         """Run the full pipeline for a single prospect.
 
@@ -65,12 +67,27 @@ class ConversionEngine:
         # 1. Enrich
         logger.info("step=enrich company=%s", company_name)
         brief = self.enrichment.run(company_name, domain)
+        # Allow the outbound ICP classifier to override enrichment-derived segment
+        if segment_override:
+            brief.primary_segment_match = segment_override
+        if confidence_override is not None:
+            brief.segment_confidence = confidence_override
+
         logger.info(
             "step=enrich.done company=%s segment=%s ai_maturity=%s/3 confidence=%.2f",
-            company_name, brief.icp_segment, brief.ai_maturity.get("score", 0), brief.segment_confidence,
+            company_name, brief.primary_segment_match, brief.ai_maturity.get("score", 0), brief.segment_confidence,
         )
 
-        # 2. Generate email (LLM with static fallback)
+        # GATING: Skip if unclassified or capacity gap detected
+        if brief.primary_segment_match == "abstain" or brief.segment_confidence < 0.6:
+            logger.warning("step=skip reason=unclassified company=%s", company_name)
+            return {"company": company_name, "status": "skipped", "reason": "insufficient_signal"}
+        
+        if not brief.bench_to_brief_match.get("bench_available"):
+            logger.warning("step=skip reason=bench_gap company=%s gaps=%s", company_name, brief.bench_to_brief_match.get("gaps"))
+            return {"company": company_name, "status": "skipped", "reason": "bench_capacity_gap"}
+
+        # 2. Generate email (Composer phase)
         logger.info("step=generate_email prospect=%s model=%s", prospect_name or "unknown", self._email_model)
         subject = build_subject(brief)
         email_html = self._generate_email(brief, prospect_name)
@@ -100,13 +117,13 @@ class ConversionEngine:
             lastname=" ".join(prospect_name.split()[1:]) if prospect_name else "",
             company=company_name,
             domain=domain,
-            icp_segment=brief.icp_segment or "none",
+            icp_segment=brief.primary_segment_match or "abstain",
             enrichment_timestamp=brief.generated_at,
             ai_maturity_score=brief.ai_maturity.get("score", 0),
             segment_confidence=brief.segment_confidence,
-            has_recent_funding=bool(brief.funding_events_180d),
-            has_recent_layoffs=bool(brief.layoff_events_120d and brief.layoff_events_120d.get("has_recent_layoffs")),
-            hiring_signal_strength=brief.job_post_velocity.get("hiring_signal_strength", "none"),
+            has_recent_funding=brief.buying_window_signals.get("funding_event", {}).get("detected", False),
+            has_recent_layoffs=brief.buying_window_signals.get("layoff_event", {}).get("detected", False),
+            hiring_signal_strength=brief.hiring_velocity.get("velocity_label", "none"),
         )
         crm_result = json.loads(crm_result_raw) if isinstance(crm_result_raw, str) else crm_result_raw
         logger.info("step=create_contact.done id=%s conflict=%s", crm_result.get("id"), crm_result.get("conflict"))
@@ -119,11 +136,11 @@ class ConversionEngine:
 
         logger.info(
             "process_lead.done company=%s segment=%s email_id=%s crm_id=%s",
-            company_name, brief.icp_segment, email_result.get("id"), crm_result.get("id"),
+            company_name, brief.primary_segment_match, email_result.get("id"), crm_result.get("id"),
         )
         return {
             "company": company_name,
-            "segment": brief.icp_segment,
+            "segment": brief.primary_segment_match,
             "email": email_result,
             "crm": crm_result,
             "brief_path": str(Path(__file__).parent / "outputs" / "hiring_signal_brief.json"),
@@ -182,10 +199,9 @@ class ConversionEngine:
                             {
                                 "role": "system",
                                 "content": (
-                                    "You are a senior SDR at Tenacious, an AI-first sales enablement firm. "
-                                    "Write concise, signal-grounded cold outreach emails in plain HTML. "
-                                    "Be specific - reference the prospect's actual signals. "
-                                    "No fluff, no generic phrases. 3-4 short paragraphs maximum."
+                                    "You are a Delivery Lead at Tenacious Intelligence writing a research-grounded outreach email. "
+                                    "Your tone is Direct, Grounded, Honest, Professional, and Non-condescending. "
+                                    "Max 120 words. One clear ask. HTML <p> tags only. No emojis."
                                 ),
                             },
                             {"role": "user", "content": prompt},
@@ -194,7 +210,10 @@ class ConversionEngine:
                     },
                 )
                 r.raise_for_status()
-                return r.json()["choices"][0]["message"]["content"]
+                content = r.json()["choices"][0]["message"]["content"]
+                if content is None:
+                    return build_fallback_html(brief, prospect_name)
+                return content
         except Exception as exc:
             logger.warning("generate_email.llm_failed exc=%s using_fallback=true", exc)
             return build_fallback_html(brief, prospect_name)
@@ -225,15 +244,6 @@ class ConversionEngine:
         output_dir.mkdir(exist_ok=True)
         path = output_dir / "competitor_gap_brief.json"
         with open(path, "w") as f:
-            json.dump(
-                {
-                    "company": brief.company_name,
-                    "generated_at": brief.generated_at,
-                    "icp_segment": brief.icp_segment,
-                    "competitor_gap": brief.competitor_gap,
-                },
-                f,
-                indent=2,
-            )
+            json.dump(brief.competitor_gap, f, indent=2)
         logger.info("competitor_gap_brief saved path=%s", path)
         return path

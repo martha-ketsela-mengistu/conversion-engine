@@ -1,0 +1,304 @@
+{
+  "generated_at": "2026-04-25T15:49:49Z",
+  "memo_version": "final_submission",
+  "claims": [
+    {
+      "id": "CLAIM-001",
+      "memo_location": "Page 1 — Executive Summary / headline number",
+      "claim": "τ²-Bench retail domain pass@1 = 0.7267 (Day 1 baseline, 5 trials x 30 tasks)",
+      "value": "0.7267",
+      "ci_95": [
+        0.6504,
+        0.7917
+      ],
+      "source_file": "eval/score_log.json",
+      "source_field": "pass_at_1",
+      "supporting_trace_ids": [
+        "9f1bceea-557f-4086-b5f0-ddebed571544",
+        "3bb05cae-be14-405a-866c-7355eccde196",
+        "85051d0d-3245-4ddb-b366-2ecb00df4ece"
+      ],
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-002",
+      "memo_location": "Page 1 — Executive Summary / headline number",
+      "claim": "Bench-gated mechanism pass@1 = 0.9 on held-out slice (10 probes, 1 trial)",
+      "value": "0.9",
+      "ci_95": [
+        0.5958,
+        0.9821
+      ],
+      "source_file": "probes/ablation_results.json",
+      "source_field": "method.pass_at_1",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-003",
+      "memo_location": "Page 1 — Executive Summary",
+      "claim": "Delta A (method vs baseline on held-out slice) = +0.10",
+      "value": "+0.10",
+      "ci_95": null,
+      "source_file": "probes/ablation_results.json",
+      "source_field": "delta_a_method_vs_baseline",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-004",
+      "memo_location": "Page 1 — Cost per qualified lead",
+      "claim": "Cost per qualified lead = $0.036 (tau2-bench proxy: $0.0199 / 0.55 qualification rate = $0.036. Rounds to <$0.05 on free tier. Challenge target: <$5.)",
+      "value": "$0.036",
+      "ci_95": null,
+      "source_file": "invoice_summary.json",
+      "source_field": "cost_per_qualified_lead_usd",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-005",
+      "memo_location": "Page 1 — Cost per qualified lead",
+      "claim": "τ²-Bench avg agent cost per task = $0.0199",
+      "value": "$0.0199",
+      "ci_95": null,
+      "source_file": "eval/score_log.json",
+      "source_field": "avg_agent_cost",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-006",
+      "memo_location": "Page 1 — Cost per qualified lead",
+      "claim": "Total challenge week LLM spend = $2.99",
+      "value": "$2.99",
+      "ci_95": null,
+      "source_file": "invoice_summary.json",
+      "source_field": "total_usd",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-007",
+      "memo_location": "Page 1 — Cost per qualified lead",
+      "claim": "Observed qualification rate = 55% (11 of 20 benchmark interactions produced a classified ICP segment; remainder classified as abstain (insufficient signals) or skipped by bench gate)",
+      "value": "55%",
+      "ci_95": null,
+      "source_file": "invoice_summary.json",
+      "source_field": "qualification_rate_observed",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-008",
+      "memo_location": "Page 1 — Speed-to-lead delta",
+      "claim": "Tenacious manual stalled-thread rate = 30–40%",
+      "value": "30–40%",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Tenacious executive interview; baseline_numbers section"
+    },
+    {
+      "id": "CLAIM-009",
+      "memo_location": "Page 1 — Speed-to-lead delta",
+      "claim": "Automated system stalled-thread rate ≈ 0% for email replies (agent responds to 100% of non-unsubscribe intents within the same session)",
+      "value": "~0%",
+      "ci_95": null,
+      "source_file": "probes/held_out_traces.jsonl",
+      "source_field": "all webhook probes with reply_sequence — 100% received a reply in every condition",
+      "supporting_trace_ids": [
+        "PROBE-3-1:method (passed=True, reason=pass)",
+        "PROBE-4-2:method (passed=True, reason=pass)",
+        "PROBE-7-2:method (passed=True, reason=pass)"
+      ],
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-010",
+      "memo_location": "Page 1 — Competitive-gap outbound performance",
+      "claim": "100% of outbound interactions led with a signal-grounded research finding (AI maturity score + competitor gap where sector data available)",
+      "value": "100% (20/20)",
+      "ci_95": null,
+      "source_file": "agent/outputs/hiring_signal_brief.json",
+      "source_field": "ai_maturity, competitor_gap — generated for every lead before email composition",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-011",
+      "memo_location": "Page 1 — Competitive-gap outbound performance",
+      "claim": "Signal-grounded outbound reply rate benchmark (top-quartile) = 7–12%",
+      "value": "7–12%",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Clay, Smartlead case studies; baseline_numbers table"
+    },
+    {
+      "id": "CLAIM-012",
+      "memo_location": "Page 1 — Competitive-gap outbound performance",
+      "claim": "B2B cold-email baseline reply rate = 1–3%",
+      "value": "1–3%",
+      "ci_95": null,
+      "source_field": null,
+      "source_file": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — LeadIQ 2026 / Apollo benchmarks; baseline_numbers table"
+    },
+    {
+      "id": "CLAIM-013",
+      "memo_location": "Page 1 — Pilot recommendation",
+      "claim": "Discovery-call-to-proposal conversion = 35–50%",
+      "value": "35–50%",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Tenacious internal, last 4 quarters"
+    },
+    {
+      "id": "CLAIM-014",
+      "memo_location": "Page 1 — Pilot recommendation",
+      "claim": "Proposal-to-close conversion = 25–40%",
+      "value": "25–40%",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Tenacious internal, last 4 quarters"
+    },
+    {
+      "id": "CLAIM-015",
+      "memo_location": "Page 1 — Pilot recommendation",
+      "claim": "Average engagement ACV (talent outsourcing) = $240K–$720K",
+      "value": "$240K–$720K",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Tenacious internal, weighted by segment"
+    },
+    {
+      "id": "CLAIM-016",
+      "memo_location": "Page 1 — Pilot recommendation",
+      "claim": "Average engagement ACV (project consulting) = $80K–$300K",
+      "value": "$80K–$300K",
+      "ci_95": null,
+      "source_file": null,
+      "source_field": null,
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — Tenacious internal, last 8 deals"
+    },
+    {
+      "id": "CLAIM-017",
+      "memo_location": "Page 1 — Pilot recommendation",
+      "claim": "Total engineers currently on Tenacious bench = 36",
+      "value": "36",
+      "ci_95": null,
+      "source_file": "agent/data/tenacious_sales_data/seed/bench_summary.json",
+      "source_field": "total_engineers_on_bench",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-018",
+      "memo_location": "Page 1 — Production latency",
+      "claim": "Production pipeline p50 latency = 46,582ms (~46.6s) across 20 synthetic interactions",
+      "value": "46582ms",
+      "ci_95": null,
+      "source_file": "README.md",
+      "source_field": "Latency Benchmark section — p50 (20-interaction benchmark run 2026-04-23)",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-019",
+      "memo_location": "Page 1 — Production latency",
+      "claim": "Production pipeline p95 latency = 392,707ms (~6.5 min) — free-tier LLM rate-limit outlier",
+      "value": "392707ms",
+      "ci_95": null,
+      "source_file": "README.md",
+      "source_field": "Latency Benchmark section — p95 (20-interaction benchmark run 2026-04-23)",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-020",
+      "memo_location": "Page 2 — One honest unresolved failure",
+      "claim": "PROBE-7-1 (dual-control coordination: premature booking) fails in all three conditions",
+      "value": "0/3 conditions pass",
+      "ci_95": null,
+      "source_file": "probes/held_out_traces.jsonl",
+      "source_field": "probe_id=PROBE-7-1: baseline=passed=False, reason=required_missing:'would' | method=passed=False, reason=required_missing:'would' | extended=passed=False, reason=required_missing:'would'",
+      "supporting_trace_ids": [
+        "PROBE-7-1:baseline",
+        "PROBE-7-1:method",
+        "PROBE-7-1:extended"
+      ],
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-021",
+      "memo_location": "Page 2 — One honest unresolved failure",
+      "claim": "Premature booking business cost: agent sends Cal.com link on 'maybe a call would be useful' — prospect feels pressured; negative brand association",
+      "value": "qualitative",
+      "ci_95": null,
+      "source_file": "probes/probe_library.md",
+      "source_field": "PROBE-7-1.business_cost",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-022",
+      "memo_location": "Page 2 — Public-signal lossiness",
+      "claim": "AI maturity score false-positive guard: company with 'ML' in name scored 0 (name is not a signal) — PROBE-9-1 passed=True, reason=ai_score=0",
+      "value": "ai_maturity=0 for ML Marketing",
+      "ci_95": null,
+      "source_file": "probes/held_out_traces.jsonl",
+      "source_field": "probe_id=PROBE-9-1",
+      "supporting_trace_ids": [
+        "PROBE-9-1:baseline"
+      ],
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-023",
+      "memo_location": "Page 2 — Public-signal lossiness",
+      "claim": "AI maturity scorer uses 5 weighted signals; absence of public signal ≠ absence of AI capability (GitHub private repos are medium-weight but invisible)",
+      "value": "qualitative",
+      "ci_95": null,
+      "source_file": "agent/enrichment/ai_maturity.py",
+      "source_field": "SIGNAL_WEIGHTS dict",
+      "supporting_trace_ids": null,
+      "published_reference": "TRP1 Challenge Week 10 spec — AI maturity scoring section"
+    },
+    {
+      "id": "CLAIM-024",
+      "memo_location": "Page 2 — Failure modes benchmark misses",
+      "claim": "30 adversarial probes designed across 10 Tenacious-specific categories",
+      "value": "30",
+      "ci_95": null,
+      "source_file": "probes/probe_library.md",
+      "source_field": "Total Probes count",
+      "supporting_trace_ids": null,
+      "published_reference": null
+    },
+    {
+      "id": "CLAIM-025",
+      "memo_location": "Page 2 — Failure modes benchmark misses",
+      "claim": "Bench over-commitment fix (PROBE-3-1): baseline=passed=False, reason=required_missing:\"don't have\" → method=passed=True, reason=pass",
+      "value": "PROBE-3-1: baseline=FAIL, method=PASS",
+      "ci_95": null,
+      "source_file": "probes/held_out_traces.jsonl",
+      "source_field": "probe_id=PROBE-3-1",
+      "supporting_trace_ids": [
+        "PROBE-3-1:baseline",
+        "PROBE-3-1:method"
+      ],
+      "published_reference": null
+    }
+  ]
+}

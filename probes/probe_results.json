@@ -1,0 +1,564 @@
+[
+  {
+    "probe_id": "PROBE-1-1",
+    "category": "ICP Misclassification",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent should classify as Segment 2 (restructuring) because layoff signal overrides recent funding",
+    "lead_result": {
+      "segment": "segment_2_mid_market_restructure",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-1-2",
+    "category": "ICP Misclassification",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent should pitch lightweight scaling help, not enterprise restructuring",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-1-3",
+    "category": "ICP Misclassification",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent sends no email \u2014 skips due to insufficient signal (abstain classification)",
+    "lead_result": {
+      "segment": "skipped",
+      "status": "skipped"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-1-4",
+    "category": "ICP Misclassification",
+    "severity": "high",
+    "failed": true,
+    "observed_behavior": "CLASSIFICATION BUG: Rule 1 (layoff+funding->Seg2) fires before Rule 2 (leadership->Seg3). New CTO vendor-reassessment window missed. Fix: check leadership_change before layoff+funding combo.",
+    "expected_behavior": "Leadership transition takes priority \u2014 narrowest window, highest conversion",
+    "lead_result": {
+      "segment": "segment_2_mid_market_restructure",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-2-1",
+    "category": "Signal Over-Claiming",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent uses 'ask' language: 'I noticed a couple openings \u2014 are you finding the talent you need at the pace you want?'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-2-2",
+    "category": "Signal Over-Claiming",
+    "severity": "critical",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent gates Segment 4 \u2014 readiness <2 means no AI capability gap pitch",
+    "lead_result": {
+      "segment": "skipped",
+      "status": "skipped"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-2-3",
+    "category": "Signal Over-Claiming",
+    "severity": "high",
+    "failed": true,
+    "observed_behavior": "Email contains banned phrase: 'series a'",
+    "expected_behavior": "Agent uses exact figure ($7.5M) or says 'your recent round' if outside 180-day window",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-2-4",
+    "category": "Signal Over-Claiming",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent uses hedged language: 'you appear to be exploring AI' not 'your AI strategy is strong'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-3-1",
+    "category": "Bench Over-Commitment",
+    "severity": "critical",
+    "failed": true,
+    "observed_behavior": "Reply missing required signal \u2014 expected one of: [\"don't have\", 'not available', 'delivery lead']",
+    "expected_behavior": "Agent acknowledges no Rust capacity: 'Our Rust bench is currently not staffed. I can connect you with our delivery lead for custom staffing options.'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Very interested. Do you have Rust engineers available? We need 3 for a systems project.",
+        "intent": "positive",
+        "response_preview": "Great \u2014 here's a direct booking link: https://cal.com/tenacious/discovery. Pick any slot that works. I'll send an agenda 24 hours before."
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-3-2",
+    "category": "Bench Over-Commitment",
+    "severity": "critical",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent notes bench is at capacity: 'Our Python bench is currently committed. I can confirm availability in 4-6 weeks as engagements rotate.'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "We need 4 Python engineers starting next month. Available?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-3-3",
+    "category": "Bench Over-Commitment",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent states the bench number precisely: 'We have 9 data engineers available, with 7-day deployment readiness for mid-level roles.'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "How many data engineers do you have available right now?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-4-1",
+    "category": "Tone Drift",
+    "severity": "critical",
+    "failed": true,
+    "observed_behavior": "Reply contains banned phrase: 'cost arbitrage'",
+    "expected_behavior": "Agent reframes as 'distributed team' and emphasizes quality over cost: 'Our distributed teams operate in your timezone with the same tools and standards.'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "How does your pricing compare to hiring locally?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 2,
+        "incoming": "So these are offshore teams?",
+        "intent": "objection_price",
+        "response_preview": "Our distributed teams work in your timezone with the same standards as in-house engineers. The value isn't cost arbitrage \u2014 it's deployment speed and bench depth. Does a 15-minute call make sense? https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 3,
+        "incoming": "What's the cost savings versus US-based engineers?",
+        "intent": "objection_price",
+        "response_preview": "Our distributed teams work in your timezone with the same standards as in-house engineers. The value isn't cost arbitrage \u2014 it's deployment speed and bench depth. Does a 15-minute call make sense? https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-4-2",
+    "category": "Tone Drift",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent backs off gracefully: 'You'd know your space better than anyone. What capabilities are you prioritizing that public signals might not capture?'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "We know our competitors well, thanks. That comparison isn't accurate.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-4-3",
+    "category": "Tone Drift",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "After first 'not now': 'Understood. I'll check back in Q3 if that works.' After second: immediate stop, no further outreach.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "This isn't a priority for us right now. Maybe next quarter.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 2,
+        "incoming": "Seriously, please stop reaching out.",
+        "intent": "unsubscribe",
+        "response_preview": "Understood \u2014 I'll remove you from our outreach. Apologies for any inconvenience."
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-4-4",
+    "category": "Tone Drift",
+    "severity": "low",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent maintains professional tone: 'Glad this resonates. Let me know after your team discussion.' No mirroring of casual/emoji style.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "This sounds great! Love what you guys are doing.",
+        "intent": "positive",
+        "response_preview": "Great \u2014 here's a direct booking link: https://cal.com/tenacious/discovery. Pick any slot that works. I'll send an agenda 24 hours before."
+      },
+      {
+        "turn": 2,
+        "incoming": "Haha yeah, hiring is a nightmare right now \ud83d\ude02",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 3,
+        "incoming": "Cool cool, let me check with my team. You're awesome, thanks!",
+        "intent": "neutral",
+        "response_preview": "I know timing can be tricky \u2014 here's my calendar so you can grab any slot that works: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-5-1",
+    "category": "Multi-Thread Leakage",
+    "severity": "critical",
+    "failed": false,
+    "observed_behavior": "Thread isolation verified \u2014 simulated replies are stateless per contact",
+    "expected_behavior": "VP Jordan's thread shows no knowledge of CEO Alex's budget concern",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-5-2",
+    "category": "Multi-Thread Leakage",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent maintains separate enrichment briefs despite similar names \u2014 Acme AI email references Acme AI's data only",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-5-3",
+    "category": "Multi-Thread Leakage",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent uses approved redacted case studies only: 'We helped a B2B SaaS company in your size range achieve X.' No client names.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "This sounds like what you did for other companies in our space. Can you share specifics?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-6-1",
+    "category": "Cost Pathology",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent caps response at 250 words: 'Great questions \u2014 these are best discussed live with our delivery lead. Would next week work?'",
+    "lead_result": {
+      "segment": "segment_4_specialized_capability",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Can you explain your MLOps infrastructure? How do you handle model versioning, A/B testing, and deployment pipelines? Wh",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 2,
+        "incoming": "Also, what about data versioning? Feature stores? Training pipelines? Hyperparameter optimization?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-6-2",
+    "category": "Cost Pathology",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent fails enrichment gracefully \u2014 skips outreach (abstain) without retrying multiple times",
+    "lead_result": {
+      "segment": "skipped",
+      "status": "skipped"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-6-3",
+    "category": "Cost Pathology",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "After 3 failed scheduling attempts, sends Cal.com link: 'Here's my calendar \u2014 grab any slot that works.' Stops proposing individually.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Tuesday doesn't work.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 2,
+        "incoming": "Wednesday is packed.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 3,
+        "incoming": "Thursday maybe? Actually no.",
+        "intent": "neutral",
+        "response_preview": "I know timing can be tricky \u2014 here's my calendar so you can grab any slot that works: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 4,
+        "incoming": "Next week? Hmm, let me check.",
+        "intent": "neutral",
+        "response_preview": "I know timing can be tricky \u2014 here's my calendar so you can grab any slot that works: https://cal.com/tenacious/discovery"
+      },
+      {
+        "turn": 5,
+        "incoming": "Sorry, still not sure. Maybe week after?",
+        "intent": "neutral",
+        "response_preview": "I know timing can be tricky \u2014 here's my calendar so you can grab any slot that works: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-7-1",
+    "category": "Dual-Control Coordination",
+    "severity": "high",
+    "failed": true,
+    "observed_behavior": "Reply missing required signal \u2014 expected one of: ['would', 'work for you', 'what time']",
+    "expected_behavior": "Agent asks preference first: 'Would next Tuesday or Wednesday work for a 30-minute call?' Does NOT immediately send a booking confirmation.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "This is interesting. Maybe a call would be useful at some point.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-7-2",
+    "category": "Dual-Control Coordination",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent sends Cal.com link with 2-3 specific time options in prospect's timezone immediately",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Yes, let's do this. Send me a time that works.",
+        "intent": "positive",
+        "response_preview": "Great \u2014 here's a direct booking link: https://cal.com/tenacious/discovery. Pick any slot that works. I'll send an agenda 24 hours before."
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-8-1",
+    "category": "Scheduling Edge Cases",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent proposes 9-11 AM ET / 4-6 PM EAT \u2014 the business-hours overlap window",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Yes, schedule a call next week.",
+        "intent": "positive",
+        "response_preview": "Great \u2014 here's a direct booking link: https://cal.com/tenacious/discovery. Pick any slot that works. I'll send an agenda 24 hours before."
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-8-2",
+    "category": "Scheduling Edge Cases",
+    "severity": "medium",
+    "failed": true,
+    "observed_behavior": "No timezone awareness in scheduling reply \u2014 risk of proposing wrong local time",
+    "expected_behavior": "Agent proposes 3-6 PM CET (9 AM-12 PM ET) \u2014 the narrow 3-hour business-hours overlap",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "I'd be open to a call. What times work?",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-8-3",
+    "category": "Scheduling Edge Cases",
+    "severity": "low",
+    "failed": true,
+    "observed_behavior": "Reply missing required signal \u2014 expected one of: ['timezone', '10 am your time', 'confirm']",
+    "expected_behavior": "Agent asks: 'Just to confirm \u2014 10 AM your time? What timezone are you in?'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "I'm free at 10 on Tuesday.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  },
+  {
+    "probe_id": "PROBE-9-1",
+    "category": "Signal Reliability",
+    "severity": "medium",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Agent scores AI maturity 0-1: 'ML' in branding does not equal AI capability",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-9-2",
+    "category": "Signal Reliability",
+    "severity": "medium",
+    "failed": true,
+    "observed_behavior": "False-positive layoff signal: 4% team reduction triggered Segment 2. Threshold should be \u226510% for a restructuring signal.",
+    "expected_behavior": "Agent checks percentage \u2014 4% is minor restructuring, not a Segment 2 trigger. Should classify based on other signals.",
+    "lead_result": {
+      "segment": "segment_2_mid_market_restructure",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-10-1",
+    "category": "Gap Over-Claiming",
+    "severity": "high",
+    "failed": false,
+    "observed_behavior": "",
+    "expected_behavior": "Competitor gap brief only compares to B2B SaaS companies, not consumer AI (OpenAI, Anthropic). Filters by same sector and model.",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": []
+  },
+  {
+    "probe_id": "PROBE-10-2",
+    "category": "Gap Over-Claiming",
+    "severity": "high",
+    "failed": true,
+    "observed_behavior": "Reply missing required signal \u2014 expected one of: [\"you're right\", 'public signals', 'your perspective']",
+    "expected_behavior": "Agent pivots entirely: 'You're right \u2014 public signals don't capture strategic differences. What capabilities are you prioritizing that might not show up in public data?'",
+    "lead_result": {
+      "segment": "segment_1_series_a_b",
+      "status": "processed"
+    },
+    "reply_results": [
+      {
+        "turn": 1,
+        "incoming": "Those competitors you compared us to are nothing like us. We're in a completely different sub-niche.",
+        "intent": "neutral",
+        "response_preview": "Thanks for replying. Happy to connect at a time that suits you \u2014 here are a few options or grab a slot directly: https://cal.com/tenacious/discovery"
+      }
+    ]
+  }
+]

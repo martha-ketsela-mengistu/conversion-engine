@@ -75,6 +75,29 @@ def log_engagement(contact_id: str, event_type: str, body: str, subject: str = "
         return {"error": str(e)}
 
 
+@observe(name="hubspot.create_deal")
+def create_deal(contact_id: str, deal_name: str, stage: str = "appointmentscheduled", amount: float | None = None) -> dict:
+    """Create a deal in HubSpot and associate it with a contact."""
+    from hubspot.crm.deals import SimplePublicObjectInputForCreate as DealInput
+    properties: dict = {"dealname": deal_name, "dealstage": stage, "pipeline": "default"}
+    if amount is not None:
+        properties["amount"] = str(amount)
+    try:
+        body = DealInput(properties=properties, associations=[])
+        result = _client.crm.deals.basic_api.create(simple_public_object_input_for_create=body)
+        _client.crm.associations.v4.basic_api.create(
+            object_type="deals",
+            object_id=result.id,
+            to_object_type="contacts",
+            to_object_id=contact_id,
+            association_spec=[{"associationCategory": "HUBSPOT_DEFINED", "associationTypeId": 3}],
+        )
+        return {"id": result.id, "deal_name": deal_name, "stage": stage}
+    except Exception as e:
+        print(f"[HubSpot] Failed to create deal: {e}")
+        return {"error": str(e)}
+
+
 @observe(name="hubspot.search_contact_by_phone")
 def search_contact_by_phone(phone: str) -> dict | None:
     try:
