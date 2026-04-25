@@ -1,0 +1,63 @@
+{
+  "held_out_n": 10,
+  "trials": 1,
+  "day1_baseline_ref": {
+    "source": "eval/score_log.json",
+    "pass_at_1": 0.7267,
+    "ci_95": [
+      0.6504,
+      0.7917
+    ]
+  },
+  "baseline": {
+    "pass_at_1": 0.8,
+    "ci_95": [
+      0.4902,
+      0.9433
+    ],
+    "k": 8,
+    "n": 10,
+    "cost_per_task_usd": 0.0,
+    "p95_latency_ms": 1219.0,
+    "note": "LLM calls mocked; latency dominated by one Playwright-backed probe (PROBE-1-2)"
+  },
+  "method": {
+    "pass_at_1": 0.9,
+    "ci_95": [
+      0.5958,
+      0.9821
+    ],
+    "k": 9,
+    "n": 10,
+    "cost_per_task_usd": 0.0,
+    "p95_latency_ms": 16.0,
+    "note": "LLM calls mocked; bench gate adds <1ms overhead per probe"
+  },
+  "extended": {
+    "pass_at_1": 0.9,
+    "ci_95": [
+      0.5958,
+      0.9821
+    ],
+    "k": 9,
+    "n": 10,
+    "cost_per_task_usd": 0.0,
+    "p95_latency_ms": 16.0,
+    "note": "LLM calls mocked; committed-ledger seeding adds <1ms overhead per probe"
+  },
+  "automated_baseline": {
+    "source": "tau2-bench leaderboard Feb 2026 (retail domain)",
+    "pass_at_1": 0.42,
+    "ci_95": null,
+    "cost_per_task_usd": null,
+    "p95_latency_ms": null,
+    "note": "GEPA/AutoAgent not run on this slice due to compute budget. Published tau2-bench retail ceiling (~42%) used as Delta B reference. Both baseline (0.80) and method (0.90) exceed this ceiling on the held-out slice."
+  },
+  "delta_a_method_vs_baseline": 0.1,
+  "delta_b_method_vs_automated_baseline": 0.48,
+  "delta_b_note": "method vs tau2-bench published ceiling; slices differ so comparison is informational. GEPA/AutoAgent not run.",
+  "mcnemar_b_baseline_fail_method_pass": 1,
+  "mcnemar_c_baseline_pass_method_fail": 0,
+  "mcnemar_p_value": 1.0,
+  "statistical_significance": false
+}
