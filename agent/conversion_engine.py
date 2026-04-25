@@ -40,7 +40,7 @@ class ConversionEngine:
         self._llm_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         self._llm_key = os.environ["OPENROUTER_API_KEY"]
         # EMAIL_MODEL: higher quality, customer-facing outreach copy
-        raw_email = os.getenv("EMAIL_MODEL", "qwen/qwen3-next-80b-a3b-instruct:free")
+        raw_email = os.getenv("EMAIL_MODEL", "qwen/qwen3-next-80b-a3b-thinking")
         self._email_model = raw_email.removeprefix("openrouter/")
 
     # ------------------------------------------------------------------
@@ -55,6 +55,8 @@ class ConversionEngine:
         prospect_email: str,
         prospect_name: str = "",
         prospect_phone: Optional[str] = None,
+        segment_override: Optional[str] = None,
+        confidence_override: Optional[float] = None,
     ) -> dict:
         """Run the full pipeline for a single prospect.
 
@@ -65,6 +67,12 @@ class ConversionEngine:
         # 1. Enrich
         logger.info("step=enrich company=%s", company_name)
         brief = self.enrichment.run(company_name, domain)
+        # Allow the outbound ICP classifier to override enrichment-derived segment
+        if segment_override:
+            brief.primary_segment_match = segment_override
+        if confidence_override is not None:
+            brief.segment_confidence = confidence_override
+
         logger.info(
             "step=enrich.done company=%s segment=%s ai_maturity=%s/3 confidence=%.2f",
             company_name, brief.primary_segment_match, brief.ai_maturity.get("score", 0), brief.segment_confidence,
@@ -202,7 +210,10 @@ class ConversionEngine:
                     },
                 )
                 r.raise_for_status()
-                return r.json()["choices"][0]["message"]["content"]
+                content = r.json()["choices"][0]["message"]["content"]
+                if content is None:
+                    return build_fallback_html(brief, prospect_name)
+                return content
         except Exception as exc:
             logger.warning("generate_email.llm_failed exc=%s using_fallback=true", exc)
             return build_fallback_html(brief, prospect_name)

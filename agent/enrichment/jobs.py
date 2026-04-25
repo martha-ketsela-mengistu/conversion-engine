@@ -13,11 +13,35 @@ import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from urllib.robotparser import RobotFileParser
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Page
 
 from agent.observability.tracing import observe
+
+# Per-process robots.txt cache: domain -> (RobotFileParser, fetched_at)
+_robots_cache: dict[str, tuple[RobotFileParser, datetime]] = {}
+_ROBOTS_TTL = timedelta(minutes=60)
+_USER_AGENT = "TenaciousBot"
+
+
+def _is_allowed(url: str) -> bool:
+    """Return True if robots.txt permits crawling this URL. Defaults to True on fetch error."""
+    parsed = urlparse(url)
+    domain = f"{parsed.scheme}://{parsed.netloc}"
+    now = datetime.now()
+    cached = _robots_cache.get(domain)
+    if cached is None or (now - cached[1]) > _ROBOTS_TTL:
+        rp = RobotFileParser()
+        rp.set_url(f"{domain}/robots.txt")
+        try:
+            rp.read()
+        except Exception:
+            return True  # if robots.txt is unreachable, default to allowed
+        _robots_cache[domain] = (rp, now)
+    return _robots_cache[domain][0].can_fetch(_USER_AGENT, url)
 
 
 ENGINEERING_KEYWORDS = [
@@ -88,6 +112,8 @@ class JobScraper:
             page = await browser.new_page()
 
             for url in career_urls:
+                if not _is_allowed(url):
+                    continue  # robots.txt disallows this URL
                 try:
                     await page.goto(url, timeout=10000)
                     await page.wait_for_load_state("networkidle", timeout=5000)

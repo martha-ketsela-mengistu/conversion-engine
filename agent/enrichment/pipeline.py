@@ -1,6 +1,7 @@
 """Main enrichment pipeline orchestrator."""
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -13,6 +14,9 @@ from dotenv import load_dotenv
 from agent.observability.tracing import observe
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
 from .crunchbase import CrunchbaseEnricher
 from .layoffs import LayoffsEnricher
 from .jobs import JobScraper
@@ -336,7 +340,7 @@ class EnrichmentPipeline:
                 return r.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
             logger.warning("summarise_signals.llm_failed exc=%s", e)
-            return f"Company {brief_data['company']} showing {brief_data['segment']} signals with AI maturity {brief_data['ai_maturity']}/3."
+            return f"Company {brief_data['company']} showing {brief_data['segment']} signals with AI maturity {brief_data.get('ai_score', brief_data.get('ai_maturity', 0))}/3."
 
     def _save_brief(self, brief: HiringSignalBrief) -> None:
         output_dir = Path(__file__).parent.parent / "outputs"

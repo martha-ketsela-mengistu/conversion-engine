@@ -6,13 +6,12 @@ from typing import TYPE_CHECKING, List, Optional
 if TYPE_CHECKING:
     from agent.enrichment.pipeline import HiringSignalBrief
 
-# Subject lines must start with Context/Question/Follow-up/Request per style guide.
 _SUBJECTS: dict[str | None, str] = {
-    "segment_1_series_a_b": "Context: your AI hiring strategy post-raise",
-    "segment_2_mid_market_restructure": "Context: restructuring window and AI capacity",
-    "segment_3_leadership_transition": "Question: your AI roadmap entering the new chapter",
-    "segment_4_specialized_capability": "Request: discuss {gap_area} at {company}",
-    None: "Context: AI capability signals in {industry} — {company}",
+    "segment_1_series_a_b": "Your AI hiring strategy post-raise",
+    "segment_2_mid_market_restructure": "Restructuring window and AI capacity",
+    "segment_3_leadership_transition": "Your AI roadmap entering the new chapter",
+    "segment_4_specialized_capability": "Discussing {gap_area} at {company}",
+    None: "AI capability signals in {industry} — {company}",
 }
 
 # Angles are grounded and non-condescending — no fabricated stats, no assertions about prospect failures.
@@ -72,7 +71,7 @@ def build_email_prompt(brief: "HiringSignalBrief", prospect_name: str) -> str:
         industry=_primary_industry(brief),
         gap_area=_gap_area(brief),
     )
-    greeting = f"Hi {prospect_name.split()[0]}," if prospect_name else "Hi,"
+    greeting = f"Hi {prospect_name.split()[0].rstrip(',.')}," if prospect_name else "Hi,"
 
     return (
         f"You are a Delivery Lead at Tenacious Intelligence writing a research-grounded outreach email.\n\n"
@@ -82,7 +81,7 @@ def build_email_prompt(brief: "HiringSignalBrief", prospect_name: str) -> str:
         f"Grounded Signals (Hiring Signal Brief):\n{_format_signals(brief)}\n\n"
         f"Competitor Gap Insight:\n{_format_gap(brief)}\n\n"
         f"TENACIOUS TONE MARKERS (Mandatory):\n"
-        f"1. Direct: No filler words, no 'just', 'quick', 'hey'. Subject line must start with Request/Context/Question.\n"
+        f"1. Direct: No filler words, no 'just', 'quick', 'hey'.\n"
         f"2. Grounded: Every claim must cite a signal above. No invented stats.\n"
         f"3. Honest: If signal is weak, ASK rather than ASSERT. Never claim 'aggressive hiring' if < 5 open roles.\n"
         f"4. Professional: Use 'engineering team' or 'available capacity', never 'bench'. No offshore clichés.\n"
@@ -91,6 +90,7 @@ def build_email_prompt(brief: "HiringSignalBrief", prospect_name: str) -> str:
         f"- Format: Plain HTML (<p> tags only). No emojis.\n"
         f"- Length: Max 120 words in body.\n"
         f"- Goal: Book a 20-min call at {_CAL_LINK}\n"
+        f"- Structure: First <p> must be ONLY the greeting. Body in a separate <p>. CTA in its own <p>. Signature last.\n"
         f"- Greeting: {greeting}\n"
         f"- Signature:\n{_SIGNATURE}"
     )
@@ -104,7 +104,7 @@ def build_fallback_html(brief: "HiringSignalBrief", prospect_name: str) -> str:
         industry=_primary_industry(brief),
         gap_area=_gap_area(brief),
     )
-    greeting = f"Hi {prospect_name.split()[0]}," if prospect_name else "Hi,"
+    greeting = f"Hi {prospect_name.split()[0].rstrip(',.')}," if prospect_name else "Hi,"
 
     return (
         f"<p>{greeting}</p>"
@@ -213,8 +213,11 @@ def _primary_urgency(brief: "HiringSignalBrief") -> str:
 def _format_signals(brief: "HiringSignalBrief") -> str:
     parts: list[str] = []
     hv = brief.hiring_velocity
-    parts.append(f"- Open engineering roles: {hv.get('open_roles_today')}")
-    parts.append(f"- Hiring velocity: {hv.get('velocity_label').replace('_', ' ')}")
+    open_roles = hv.get("open_roles_today") or 0
+    confidence = hv.get("signal_confidence", 1.0)
+    if open_roles > 0 or confidence >= 0.6:
+        parts.append(f"- Open engineering roles: {open_roles}")
+        parts.append(f"- Hiring velocity: {hv.get('velocity_label').replace('_', ' ')}")
     
     bw = brief.buying_window_signals
     if bw.get("funding_event", {}).get("detected"):
@@ -278,3 +281,19 @@ _OBJECTIONS = {
 
 def build_objection_response(objection_key: str) -> str:
     return _OBJECTIONS.get(objection_key, "I understand. Would a quick 15-minute call to align on your specific needs make sense?")
+
+
+def build_capacity_gap_reply(stack_name: str, count: int, deploy_days: int) -> str:
+    """Bench-gated capacity reply with exact numbers. No rounding, no vague estimates."""
+    if count <= 0:
+        return (
+            f"<p>Our {stack_name.capitalize()} bench is currently not staffed. "
+            "I can connect you with our delivery lead to explore custom staffing options.</p>"
+            "<p>Best,<br>Martha @ Tenacious</p>"
+        )
+    return (
+        f"<p>We have {count} {stack_name} engineers available, "
+        f"with {deploy_days}-day deployment readiness.</p>"
+        "<p>I can connect you with our delivery lead to confirm scope and timing.</p>"
+        "<p>Best,<br>Martha @ Tenacious</p>"
+    )
