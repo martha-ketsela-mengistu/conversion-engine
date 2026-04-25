@@ -59,11 +59,14 @@ _BENCH_PROSPECTS = [
 ]
 
 # Prospect used for the single live run
+# Deep Cogito Inc — Series A filed 2026-04-24 (yesterday), AI-adjacent name
 _LIVE_PROSPECT = {
-    "company_name":   "CrossBoundary",
-    "domain":         "crossboundaryenergy.com",
-    "prospect_email": "alex.morgan@crossboundaryenergy.com",
-    "prospect_name":  "Alex Morgan",
+    "company_name":       "Deep Cogito Inc.",
+    "domain":             "deepcogito.com",
+    "prospect_email":     "cto@deepcogito.com",
+    "prospect_name":      "CTO",
+    "segment_override":   "segment_1_series_a_b",
+    "confidence_override": 0.74,
 }
 
 
@@ -237,12 +240,15 @@ def run_live() -> dict:
     """Run one full process_new_lead() with live Playwright scraping + real API calls (sink mode)."""
     from agent.conversion_engine import ConversionEngine
 
-    company = _LIVE_PROSPECT["company_name"]
-    domain  = _LIVE_PROSPECT["domain"]
+    company  = _LIVE_PROSPECT["company_name"]
+    domain   = _LIVE_PROSPECT["domain"]
+    segment  = _LIVE_PROSPECT.get("segment_override")
+    conf     = _LIVE_PROSPECT.get("confidence_override")
 
     print("\n-- Live run (Playwright scraping active) ------------------------")
     print(f"  Company : {company}")
     print(f"  Domain  : {domain}")
+    print(f"  Segment : {segment or 'auto-classify'}  conf={conf or 'auto'}")
     print(f"  Email   : {_LIVE_PROSPECT['prospect_email']} -> routed to SINK_EMAIL")
 
     engine = ConversionEngine()
@@ -263,11 +269,20 @@ def run_live() -> dict:
     # Build the mock fixture for comparison (same company/domain).
     mock_velocity = _mock_job_velocity(company, domain)
 
+    _lead_kwargs = {
+        "company_name":   company,
+        "domain":         domain,
+        "prospect_email": _LIVE_PROSPECT["prospect_email"],
+        "prospect_name":  _LIVE_PROSPECT["prospect_name"],
+        **({"segment_override":   segment} if segment else {}),
+        **({"confidence_override": conf}   if conf is not None else {}),
+    }
+
     print(f"  Scraper : launching Playwright (headless Chromium) …")
     scrape_ok = True
     try:
         t0 = time.perf_counter()
-        result = engine.process_new_lead(**_LIVE_PROSPECT)
+        result = engine.process_new_lead(**_lead_kwargs)
         elapsed = time.perf_counter() - t0
     except Exception as exc:
         scrape_ok = False
@@ -275,12 +290,12 @@ def run_live() -> dict:
         scraper.frozen_dataset = saved_frozen
         with patch.object(scraper, "get_job_velocity", side_effect=_mock_job_velocity):
             t0 = time.perf_counter()
-            result = engine.process_new_lead(**_LIVE_PROSPECT)
+            result = engine.process_new_lead(**_lead_kwargs)
             elapsed = time.perf_counter() - t0
     finally:
         scraper.frozen_dataset = saved_frozen  # always restore
 
-    # Load the live velocity result from disk cache for the comparison table.
+    # Load live velocity from disk cache for the comparison table.
     live_velocity: dict = mock_velocity  # fallback if scrape failed
     if scrape_ok and cache_path.exists():
         with open(cache_path) as f:
@@ -299,7 +314,7 @@ def run_live() -> dict:
     # Prospect replies by email — triggers programmatic booking attempt.
     email_reply = simulate_inbound_reply(
         email=_LIVE_PROSPECT["prospect_email"],
-        text="Sounds interesting. Let's do next Tuesday at 2pm.",
+        text="Thanks for reaching out. This is relevant — we're looking at engineering capacity right now. Could we do next Tuesday at 2pm?",
     )
 
     # Same prospect later sends an SMS to book directly.
@@ -387,7 +402,8 @@ def main() -> None:
         min_ms, max_ms = 0.0, 0.0
 
     # 4. Save benchmark report (includes live vs mock velocity comparison)
-    live_velocity_cache = AGENT_DIR / "data" / "job_cache" / "crossboundary.json"
+    cache_key_bench = company.lower().replace(" ", "_").replace(".", "")
+    live_velocity_cache = AGENT_DIR / "data" / "job_cache" / f"{cache_key_bench}.json"
     live_velocity_data = None
     if live_velocity_cache.exists():
         with open(live_velocity_cache) as f:
